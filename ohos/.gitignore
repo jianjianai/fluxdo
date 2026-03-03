@@ -1,0 +1,6 @@
+# OpenHarmony 构建产物
+har/
+.hvigor/
+.caches/
+node_modules/
+build/

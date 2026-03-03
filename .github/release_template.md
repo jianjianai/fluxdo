@@ -29,6 +29,12 @@
                 <a href="https://github.com/lingyan000/fluxdo/releases/download/vVERSION/fluxdo-unsigned.ipa"><img src="https://img.shields.io/badge/IPA-Unsigned-0c6bff.svg?logo=apple"></a>
             </td>
         </tr>
+        <tr>
+        <td>OpenHarmony</td>
+            <td>
+                <a href="https://github.com/lingyan000/fluxdo/releases/download/vVERSION/fluxdo-ohos.hap"><img src="https://img.shields.io/badge/HAP-OpenHarmony-ff2d55.svg?logo=huawei"></a>
+            </td>
+        </tr>
     </tbody>
 </table>
 

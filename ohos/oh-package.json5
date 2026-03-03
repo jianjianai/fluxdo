@@ -1,0 +1,11 @@
+{
+  "modelVersion": "5.0.0",
+  "description": "Fluxdo - A Discourse client for OpenHarmony",
+  "dependencies": {
+    "@ohos/flutter_ohos": "file:./har/flutter.har"
+  },
+  "devDependencies": {
+    "@ohos/hvigor": "5.4.1",
+    "@ohos/hvigor-ohos-plugin": "5.4.1"
+  }
+}

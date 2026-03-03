@@ -9,6 +9,76 @@ env:
   IS_STABLE: ${{ !contains(github.ref, '-') }}
 
 jobs:
+  build-ohos:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Clone OpenHarmony Flutter SDK
+        run: |
+          git clone --depth 1 --branch oh-3.35.7-dev \
+            https://gitcode.com/openharmony-tpc/flutter_flutter.git \
+            $HOME/flutter-ohos
+          echo "$HOME/flutter-ohos/bin" >> $GITHUB_PATH
+
+      - name: Setup OpenHarmony SDK
+        env:
+          OHOS_SDK_URL: https://repo.huaweicloud.com/openharmony/os/5.0.2-Release/ohos-sdk-windows_linux-public.tar.gz
+        run: |
+          # 下载 OpenHarmony SDK 命令行工具
+          mkdir -p $HOME/ohos-sdk
+          if wget -q "$OHOS_SDK_URL" -O /tmp/ohos-sdk.tar.gz; then
+            tar -xzf /tmp/ohos-sdk.tar.gz -C $HOME/ohos-sdk --strip-components=1 2>/dev/null || true
+          else
+            echo "::warning::OHOS SDK 下载失败，将继续尝试使用 flutter-ohos 内置工具链"
+          fi
+          # 设置 OHOS SDK 路径（flutter-ohos 会使用此路径）
+          echo "OHOS_SDK_HOME=$HOME/ohos-sdk" >> $GITHUB_ENV
+
+      - name: Pre-cache Flutter SDK
+        run: |
+          flutter --version || true
+          flutter precache --ohos || true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build OpenHarmony HAP
+        run: |
+          flutter build hap --release
+          mkdir -p dist
+          HAP_FILE=$(find build -name "*.hap" | head -1)
+          if [ -n "$HAP_FILE" ]; then
+            cp "$HAP_FILE" dist/fluxdo-ohos.hap
+          else
+            echo "::error::构建完成但未找到 HAP 文件，请检查构建输出"
+            ls -la build/ 2>/dev/null || true
+            exit 1
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifact-ohos
+          path: ./dist
+          overwrite: true
+
   build:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -120,7 +190,7 @@ jobs:
           overwrite: true
 
   changelog:
-    needs: build
+    needs: [build, build-ohos]
     runs-on: ubuntu-latest
     if: ${{ !contains(github.ref, '-') }}
     permissions:
@@ -177,7 +247,7 @@ jobs:
           fi
 
   upload:
-    needs: build
+    needs: [build, build-ohos]
     runs-on: ubuntu-latest
     permissions: write-all
     services:
